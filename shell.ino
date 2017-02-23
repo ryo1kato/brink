@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /* *************************************************************************** *
  *                       Stub IO routines for our sample
@@ -84,17 +85,35 @@ int cmd_help(int argc, const char** argv)
 
 
 msh_define_help( rgb, "Set RGB LED color / brightness",
-        "Usage: rgb 255 255 255\n");
+        "Usage: rgb 255 255 255  # 0 to 255 pwm\n"
+        "       rgb 999          # 0-9 exponential scale\n");
 int cmd_rgb(int argc, const char** argv)
 {
-    int i;
-    if ( argc != 4 ) {
-        pico_puts("Error: need exactly 3 arguments.");
+    if ( argc == 2 ) {
+        if (strlen(argv[1]) < 3) {
+            pico_puts("Error: need three digits\n");
+            return 1;
+        }
+        int r_pow = argv[1][0] - '0';
+        int g_pow = argv[1][1] - '0';
+        int b_pow = argv[1][2] - '0';
+
+        int r = (r_pow == 0) ? 0 : 1 << (r_pow - 1);
+        int g = (g_pow == 0) ? 0 : 1 << (g_pow - 1);
+        int b = (b_pow == 0) ? 0 : 1 << (b_pow - 1);
+        
+        led_rgb( (r < 255) ? r : 255,
+                 (g < 255) ? g : 255,
+                 (b < 255) ? b : 255 );
     }
-    int r = atoi(argv[1]);
-    int g = atoi(argv[2]);
-    int b = atoi(argv[3]);
-    led_rgb(r, g, b);
+    else if ( argc == 4 ) {
+        int r = atoi(argv[1]);
+        int g = atoi(argv[2]);
+        int b = atoi(argv[3]);
+        led_rgb(r, g, b);
+    } else {
+        pico_puts("Error: need exactly 1, or 3 arguments.");
+    }
     return 0;
 }
 
